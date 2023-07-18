@@ -35,57 +35,55 @@ const emitToken = async (req, res, next) => {
   next();
 };
 
-
-
 const verifyToken = (req, res, next) => {
-    try {
-      let { token } = req.query;
-      if (!token) {
-        token = req.headers["authorization"];
-        if (!token)
-          return res
-            .status(400)
-            .send("ruta protegida, debe proporcionar un token de acceso.");
-        token = token.split(" ")[1];
-        if (token.length == 0) {
-          throw new Error("No se ha proporcionado un token");
-        }
+  try {
+    let { token } = req.query;
+    if (!token) {
+      token = req.headers["authorization"];
+      if (!token)
+        return res
+          .status(400)
+          .send("ruta protegida, debe proporcionar un token de acceso.");
+      token = token.split(" ")[1];
+      if (token.length == 0) {
+        throw new Error("No se ha proporcionado un token");
       }
-  
-      jwt.verify(token, process.env.PASSWORD_SECRET, async (error, decoded) => {
-        if (error) {
-          return res.status(401).json({
-            code: 401,
-            message:
-              "Debe proporcionar un token válido / su token puede estar expirado.",
-          });
-        }
-  
-        try {
-          let user = await User.findByPk(decoded.data.id, {
-            attributes: ["id", "firstName", "lastName", "email"],
-          });
-          if (!user) {
-            return res.status(400).json({
-              code: 400,
-              message: "Usuario ya no existe en el sistema.",
-            });
-          }
-          req.user = user;
-          next();
-        } catch (error) {
-          res.status(500).json({ code: 500, message: "Error en autenticación." });
-        }
-      });
-    } catch (error) {
-      return res.status(401).json({
-        code: 401,
-        message: error.message,
-      });
     }
-  };
-  
+
+    jwt.verify(token, process.env.PASSWORD_SECRET, async (error, decoded) => {
+      if (error) {
+        return res.status(401).json({
+          code: 401,
+          message:
+            "Debe proporcionar un token válido / su token puede estar expirado.",
+        });
+      }
+
+      try {
+        let user = await User.findByPk(decoded.data.id, {
+          attributes: ["id", "firstName", "lastName", "email"],
+        });
+        if (!user) {
+          return res.status(400).json({
+            code: 400,
+            message: "Usuario ya no existe en el sistema.",
+          });
+        }
+        req.user = user;
+        next();
+      } catch (error) {
+        res.status(500).json({ code: 500, message: "Error en autenticación." });
+      }
+    });
+  } catch (error) {
+    return res.status(401).json({
+      code: 401,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
-    emitToken, 
-    verifyToken
+  emitToken,
+  verifyToken
 }

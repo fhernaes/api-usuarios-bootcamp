@@ -1,53 +1,50 @@
 const Bootcamp = require("../models/bootcamp.model");
 const User = require("../models/user.model");
 
-const createBootcamp = async (bootcamp) => {
+const createBootcamp = async (req, res) => {
+  const { title, cue, description } = req.body;
   try {
     const createdBootcamp = await Bootcamp.create({
-      title: bootcamp.title,
-      cue: bootcamp.cue,
-      description: bootcamp.description,
+      title,
+      cue,
+      description
     });
-
-    console.log(`>> Creado el bootcamp: ${JSON.stringify(createdBootcamp, null, 4)}`);
-    return createdBootcamp;
+    res.status(201).json({ message: "Bootcamp creado", createdBootcamp });
   } catch (err) {
     console.log(`>> Error al crear el bootcamp: ${err}`);
     throw err;
   }
 };
 
-const addUser = async (bootcampId, userId) => {
+const addUser = async (req, res) => {
   try {
+    const { bootcampId } = req.body;
+    const { userIds } = req.body;
+
     const bootcamp = await Bootcamp.findByPk(bootcampId);
+
     if (!bootcamp) {
-      console.log("No se encontró el Bootcamp!");
-      return null;
+      res.status(404).json({ message: "Bootcamp no encontrado" });
     }
+    const users = await User.findAll({ where: { id: userIds } });
 
-    const user = await User.findByPk(userId);
-    if (!user) {
-      console.log("Usuario no encontrado!");
-      return null;
+    if (users.length === 0) {
+      res.status(404).json({ message: "Ningún usuario encontrado" });
     }
-
-    await bootcamp.addUser(user);
-    console.log("***************************");
-    console.log(
-      `Agregado el usuario id=${user.id} al bootcamp con id=${bootcamp.id}`
-    );
-    console.log("***************************");
-
-    return bootcamp;
+    await bootcamp.addUsers(users);
+    res.status(200).json({ message: "Usuarios agregados al bootcamp con éxito", data: bootcamp });
   } catch (err) {
-    console.log(">> Error mientras se estaba agregando Usuario al Bootcamp", err);
-    throw err;
+    console.log(">> Error mientras se estaban agregando los usuarios al Bootcamp", err);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
-const findById = async (Id) => {
+
+const findById = async (req, res) => {
+  const bootcampId = req.params.id;
+
   try {
-    const bootcamp = await Bootcamp.findByPk(Id, {
+    const bootcamp = await Bootcamp.findByPk(bootcampId, {
       include: [
         {
           model: User,
@@ -59,15 +56,14 @@ const findById = async (Id) => {
         },
       ],
     });
-
-    return bootcamp;
+    res.status(200).json({ message: "Bootcamp encontrado", data: bootcamp });
   } catch (err) {
     console.log(`>> Error mientras se encontraba el bootcamp: ${err}`);
     throw err;
   }
 };
 
-const findAll = async () => {
+const findAll = async (req, res) => {
   try {
     const bootcamps = await Bootcamp.findAll({
       include: [
@@ -82,7 +78,7 @@ const findAll = async () => {
       ],
     });
 
-    return bootcamps;
+    res.status(200).json({ message: "Bootcamps encontrados", data: bootcamps });
   } catch (err) {
     console.log(">> Error Buscando los Bootcamps: ", err);
     throw err;

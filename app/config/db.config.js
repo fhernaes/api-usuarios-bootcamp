@@ -1,7 +1,7 @@
 const Sequelize = require("sequelize");
 let database, username, password, host;
 
-database = "db_bootcamp";
+database = "db_jwtbootcamp";
 username = "f"
 password = "123456"
 host = "localhost"

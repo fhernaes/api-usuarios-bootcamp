@@ -1,8 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config.js");
 
-
-
 const Bootcamp = sequelize.define('Bootcamp', {
   title: {
     type: DataTypes.STRING,
